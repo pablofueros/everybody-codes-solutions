@@ -23,6 +23,7 @@ Each quest is stored under `events/<year>/quest_<id>/` and contains:
 | Event | Quest | Part 1 | Part 2 | Part 3 |
 |------|--------|--------|--------|--------|
 | 2025 | 1 | ✅ | ✅ | ✅ |
+| 2025 | 2 | ✅ | ✅ | ✅ |
 
 ---
 
