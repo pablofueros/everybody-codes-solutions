@@ -1,0 +1,14 @@
+schema_version = 1
+
+[events."2024"]
+quest_01 = [1, 2, 3]
+
+[events."2025"]
+quest_01 = [1, 2, 3]
+quest_02 = [1, 2, 3]
+quest_03 = [1, 2, 3]
+quest_04 = [1, 2, 3]
+quest_05 = [1, 2]
+quest_06 = [1, 2, 3]
+quest_07 = [1, 2]
+quest_08 = [1]
