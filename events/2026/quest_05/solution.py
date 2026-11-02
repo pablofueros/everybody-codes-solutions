@@ -1,10 +1,9 @@
 class Grid:
     def __init__(self, data):
         self._grid = [list(x) for x in data.splitlines()]
-        self.mark_land(self._center[0], self._center[1])
 
     @property
-    def _center(self):
+    def center(self):
         return self.n_rows // 2, self.n_cols // 2
 
     @property
@@ -19,16 +18,18 @@ class Grid:
         for row in self._grid:
             print(" ".join(row))
 
-    def mark_land(self, i_row, i_col):
-        self._grid[i_row][i_col] = "#"
+    def _mark(self, coord, symbol):
+        self._grid[coord[0]][coord[1]] = symbol
 
-    def mark_sand(self, i_row, i_col):
-        self._grid[i_row][i_col] = "="
+    def _count(self, symbol):
+        count = 0
+        for i_row in range(self.n_rows):
+            for i_col in range(self.n_cols):
+                if self._grid[i_row][i_col] == symbol:
+                    count += 1
+        return count
 
-    def mark_trees(self, i_row, i_col):
-        self._grid[i_row][i_col] = "@"
-
-    def get_neighbors(self, coord):
+    def _get_neighbors(self, coord):
         neighbors = []
         options = [
             (1, 0),
@@ -46,8 +47,26 @@ class Grid:
                 neighbors.append(new)
         return neighbors
 
+    def _is_edge(self, coord):
+        row, col = coord
+        return row == 0 or row == self.n_rows - 1 or col == 0 or col == self.n_cols - 1
+
+    def mark_land(self, coord):
+        self._mark(coord, "#")
+
+    def get_land_frontier(self):
+        frontier = set()
+        for i_row in range(self.n_rows):
+            for i_col in range(self.n_cols):
+                if self._grid[i_row][i_col] == "#":
+                    neighbors = self._get_neighbors((i_row, i_col))
+                    for new in neighbors:
+                        if self._grid[new[0]][new[1]] != "#":
+                            frontier.add(new)
+        return frontier
+
     def can_be_land(self, coord):
-        neighbors = self.get_neighbors(coord)
+        neighbors = self._get_neighbors(coord)
         count = 0
         for point in neighbors:
             if self._grid[point[0]][point[1]] == "1":
@@ -55,71 +74,6 @@ class Grid:
             if self._grid[point[0]][point[1]] == "#":
                 count += 1
         return count >= 5
-
-    def get_frontier(self):
-        frontier = set()
-        for i_row in range(self.n_rows):
-            for i_col in range(self.n_cols):
-                if self._grid[i_row][i_col] == "#":
-                    neighbors = self.get_neighbors((i_row, i_col))
-                    for new in neighbors:
-                        if self._grid[new[0]][new[1]] != "#":
-                            frontier.add(new)
-        return frontier
-
-    def count_land(self):
-        count = 0
-        for i_row in range(self.n_rows):
-            for i_col in range(self.n_cols):
-                if self._grid[i_row][i_col] == "#":
-                    count += 1
-        return count
-
-    def is_edge(self, coord_x, coord_y):
-        if coord_x == 0 or coord_x == self.n_rows - 1:
-            return True
-        if coord_y == 0 or coord_y == self.n_cols - 1:
-            return True
-
-    def get_border(self):
-        border = set()
-        for i_row in range(self.n_rows):
-            for i_col in range(self.n_cols):
-                if self._grid[i_row][i_col] == "#":
-                    neighbors = self.get_neighbors((i_row, i_col))
-                    for neighbor in neighbors:
-                        if self._grid[neighbor[0]][neighbor[1]] != "#":
-                            border.add((i_row, i_col))
-                    if self.is_edge(i_row, i_col):
-                        border.add((i_row, i_col))
-        return border
-
-    def get_inside_frontier(self):
-        frontier = set()
-        for i_row in range(self.n_rows):
-            for i_col in range(self.n_cols):
-                if self._grid[i_row][i_col] == "=":
-                    neighbors = self.get_neighbors((i_row, i_col))
-                    for new in neighbors:
-                        if self._grid[new[0]][new[1]] != "=":
-                            frontier.add(new)
-        return frontier
-
-    def can_be_sand(self, coord):
-        neighbors = self.get_neighbors(coord)
-        count = 0
-        for point in neighbors:
-            if self._grid[point[0]][point[1]] == "=":
-                count += 1
-        return count >= 5
-
-    def count_sand(self):
-        count = 0
-        for i_row in range(self.n_rows):
-            for i_col in range(self.n_cols):
-                if self._grid[i_row][i_col] == "=":
-                    count += 1
-        return count
 
     def get_land(self):
         land = []
@@ -129,7 +83,52 @@ class Grid:
                     land.append((i_row, i_col))
         return land
 
-    def is_tree_valid(self, x, y):
+    def count_land(self):
+        return self._count("#")
+
+    def mark_sand(self, coord):
+        self._mark(coord, "=")
+
+    def get_border(self):
+        border = set()
+        for i_row in range(self.n_rows):
+            for i_col in range(self.n_cols):
+                if self._grid[i_row][i_col] == "#":
+                    neighbors = self._get_neighbors((i_row, i_col))
+                    for neighbor in neighbors:
+                        if self._grid[neighbor[0]][neighbor[1]] != "#":
+                            border.add((i_row, i_col))
+                    if self._is_edge((i_row, i_col)):
+                        border.add((i_row, i_col))
+        return border
+
+    def get_sand_frontier(self):
+        frontier = set()
+        for i_row in range(self.n_rows):
+            for i_col in range(self.n_cols):
+                if self._grid[i_row][i_col] == "=":
+                    neighbors = self._get_neighbors((i_row, i_col))
+                    for new in neighbors:
+                        if self._grid[new[0]][new[1]] == "#":
+                            frontier.add(new)
+        return frontier
+
+    def can_be_sand(self, coord):
+        neighbors = self._get_neighbors(coord)
+        count = 0
+        for point in neighbors:
+            if self._grid[point[0]][point[1]] == "=":
+                count += 1
+        return count >= 5
+
+    def count_sand(self):
+        return self._count("=")
+
+    def mark_tree(self, coord):
+        self._mark(coord, "@")
+
+    def is_tree_valid(self, coord):
+        x, y = coord
         if x - 2 < 0 or x + 2 >= self.n_rows:
             return False
         if y - 2 < 0 or y + 2 >= self.n_cols:
@@ -167,14 +166,14 @@ class Grid:
         for i_row in range(self.n_rows):
             for i_col in range(self.n_cols):
                 if self._grid[i_row][i_col] == "@":
-                    neighbors = self.get_neighbors((i_row, i_col))
+                    neighbors = self._get_neighbors((i_row, i_col))
                     for new in neighbors:
                         if self._grid[new[0]][new[1]] == "#":
                             frontier.add(new)
         return frontier
 
     def can_be_tree(self, coord):
-        neighbors = self.get_neighbors(coord)
+        neighbors = self._get_neighbors(coord)
         count = 0
         for point in neighbors:
             if self._grid[point[0]][point[1]] == "=":
@@ -184,23 +183,19 @@ class Grid:
         return count >= 4
 
     def count_trees(self):
-        count = 0
-        for i_row in range(self.n_rows):
-            for i_col in range(self.n_cols):
-                if self._grid[i_row][i_col] == "@":
-                    count += 1
-        return count
+        return self._count("@")
 
 
 def part_1(data: str) -> str:
     grid = Grid(data)
+    grid.mark_land(grid.center)
     while True:
         candidates = []
-        for coord in grid.get_frontier():
+        for coord in grid.get_land_frontier():
             if grid.can_be_land(coord):
                 candidates.append(coord)
         for new in candidates:
-            grid.mark_land(new[0], new[1])
+            grid.mark_land(new)
         if not candidates:
             break
     return str(grid.count_land())
@@ -209,25 +204,26 @@ def part_1(data: str) -> str:
 def part_2(data: str) -> str:
     grid = Grid(data)
     # Mark land
+    grid.mark_land(grid.center)
     while True:
         candidates = []
-        for coord in grid.get_frontier():
+        for coord in grid.get_land_frontier():
             if grid.can_be_land(coord):
                 candidates.append(coord)
         for new in candidates:
-            grid.mark_land(new[0], new[1])
+            grid.mark_land(new)
         if not candidates:
             break
     # Mark sand
-    for x, y in grid.get_border():
-        grid.mark_sand(x, y)
+    for coord in grid.get_border():
+        grid.mark_sand(coord)
     while True:
         candidates = []
-        for coord in grid.get_inside_frontier():
+        for coord in grid.get_sand_frontier():
             if grid.can_be_sand(coord):
                 candidates.append(coord)
         for new in candidates:
-            grid.mark_sand(new[0], new[1])
+            grid.mark_sand(new)
         if not candidates:
             break
     return str(grid.count_sand())
@@ -236,38 +232,39 @@ def part_2(data: str) -> str:
 def part_3(data: str) -> str:
     grid = Grid(data)
     # Mark land
+    grid.mark_land(grid.center)
     while True:
         candidates = []
-        for coord in grid.get_frontier():
+        for coord in grid.get_land_frontier():
             if grid.can_be_land(coord):
                 candidates.append(coord)
         for new in candidates:
-            grid.mark_land(new[0], new[1])
+            grid.mark_land(new)
         if not candidates:
             break
     # Mark sand
-    for x, y in grid.get_border():
-        grid.mark_sand(x, y)
+    for coord in grid.get_border():
+        grid.mark_sand(coord)
     while True:
         candidates = []
-        for coord in grid.get_inside_frontier():
+        for coord in grid.get_sand_frontier():
             if grid.can_be_sand(coord):
                 candidates.append(coord)
         for new in candidates:
-            grid.mark_sand(new[0], new[1])
+            grid.mark_sand(new)
         if not candidates:
             break
     # Mark trees
-    for x, y in grid.get_land():
-        if grid.is_tree_valid(x, y):
-            grid.mark_trees(x, y)
+    for coord in grid.get_land():
+        if grid.is_tree_valid(coord):
+            grid.mark_tree(coord)
     for _ in range(2):
         candidates = []
         for coord in grid.get_trees_frontier():
             if grid.can_be_tree(coord):
                 candidates.append(coord)
         for new in candidates:
-            grid.mark_trees(new[0], new[1])
+            grid.mark_tree(new)
     return str(grid.count_trees())
 
 
